@@ -1,0 +1,27 @@
+{% if request.user.is_authenticated %}
+<form action="/logout/" method="post">
+    {% csrf_token %}
+<input type="submit" value="Logout">
+</form>
+{% endif %}
+
+
+{% if formlogin %}
+<form action="/" method="post">
+    {% csrf_token %}
+    {{ formlogin }}
+    <input type="submit" value="Submit">
+</form>
+{% endif %}
+{% if formregister %}
+<form action="/" method="post">
+    {% csrf_token %}
+    {{ formregister }}
+    <input type="submit" value="Submit">
+</form>
+{% endif %}
+
+{% if error_message %}
+    <p class="error">{{ error_message }}</p>
+{% endif %}
+

@@ -1,0 +1,13 @@
+{% for message in messages %}
+<div class="message-container">
+    <p>{{ message.text}}</p>
+</div>
+{% endfor %}
+<form action="" method="post">
+    {% csrf_token %}
+    {{messageform}}
+<input type="submit" value="send massage">
+</form>
+
+
+hello {{ username}}
