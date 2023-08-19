@@ -4,8 +4,8 @@ from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q,Count
 from django.urls import reverse
-from .forms import sendmessage
-from .models import Message, Chat,User
+from .forms import *
+from .models import Message, Chat,App_User,User
 
 # Create your views here.
 def handler(request):
@@ -13,16 +13,19 @@ def handler(request):
         return messaging_service(request,'')
     else:
         return login_user(request)
+    
+
+
 def register_user(request):
 
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
 
         if form.is_valid():
-            form.save
-            return HttpResponseRedirect("/")
+            user = form.save()            
+            return HttpResponseRedirect("/register")
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request,"login/index.html", {"formregister": form})
 
 def login_user(request):
@@ -53,22 +56,38 @@ def logout_user(request):
         error_message = "Successfully logged out"
         return render(request, 'login/index.html', {'form': form, 'error_message': error_message})
     else:
-        return HttpResponseRedirect("/")
+        return HttpResponseRedirect("/Chat")
     
 
 """
 \messaging\
 
 """
+def user_exists(username):
+    try:
+        User.objects.get(username=username)
+        return True  # User with the provided username exists
+    except User.DoesNotExist:
+        return False
+
 
 def messaging_service(request,username_link):
     if request.user.is_authenticated == False:
         return HttpResponseRedirect("/")
+    if username_link:
+        if not user_exists(username_link):
+            return HttpResponseRedirect("/chat/")
     if request.method == "POST":
-        form = sendmessage(data = request.POST)
+        if not username_link:
+            form = general_sendmessage(data = request.POST)
+        else:
+            form = specific_sendmessage(data = request.POST)
         if form.is_valid():
-            user_to = form.cleaned_data.get("user_to")
-            user_recep = User.objects.get(username = user_to)
+            if not username_link:
+                user_to = form.cleaned_data.get("user_to")
+            else:
+                user_to = username_link
+            user_recep = App_User.objects.get(username = user_to)    
             text = form.cleaned_data.get("text")
             chatrec  = Chat.objects.annotate(participant_count=Count('participants')).filter(participants=request.user).filter(participants=user_recep).filter(participant_count=2)
             if chatrec.exists():
@@ -88,14 +107,15 @@ def messaging_service(request,username_link):
     else:
         username = request.user.get_username()
         if not username_link:
-            form = sendmessage()
-            new_choices = [(value, label) for value, label in form.fields['user_to'].choices if value != username]
+            form = general_sendmessage()
+            appuser = App_User.objects.filter(user__username = username).first()
+            new_choices = appuser.friends.exclude(username=username).values_list('username','username')
             form.fields['user_to'].choices = new_choices
-            usernames = User.objects.exclude(username=username).values_list('username', flat=True)
+            usernames = appuser.friends.exclude(username=username).values_list('username', flat=True)
             return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames})
         else:
             messages = Message.objects.filter(
             chat__in=Chat.objects.filter(participants__username=username).filter(participants__username=username_link))
-            form = sendmessage()
+            form = specific_sendmessage()
             return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
 

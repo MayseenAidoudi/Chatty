@@ -1,5 +1,5 @@
 {% if request.user.is_authenticated %}
-<form action="/logout/" method="post">
+<form action="chat/logout/" method="post">
     {% csrf_token %}
 <input type="submit" value="Logout">
 </form>
@@ -7,14 +7,14 @@
 
 
 {% if formlogin %}
-<form action="/" method="post">
+<form action="/chat/" method="post">
     {% csrf_token %}
     {{ formlogin }}
     <input type="submit" value="Submit">
 </form>
 {% endif %}
 {% if formregister %}
-<form action="/" method="post">
+<form action="" method="post">
     {% csrf_token %}
     {{ formregister }}
     <input type="submit" value="Submit">
