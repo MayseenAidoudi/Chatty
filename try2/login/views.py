@@ -3,14 +3,14 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q,Count
-
+from django.urls import reverse
 from .forms import sendmessage
 from .models import Message, Chat,User
 
 # Create your views here.
 def handler(request):
     if request.user.is_authenticated:
-        return messaging_service(request)
+        return messaging_service(request,'')
     else:
         return login_user(request)
 def register_user(request):
@@ -61,7 +61,7 @@ def logout_user(request):
 
 """
 
-def messaging_service(request):
+def messaging_service(request,username_link):
     if request.user.is_authenticated == False:
         return HttpResponseRedirect("/")
     if request.method == "POST":
@@ -83,11 +83,19 @@ def messaging_service(request):
                 message_to_send = Message(text = text, user = request.user, chat = chat_to)
                 message_to_send.save()
                 print("hello")
-        return HttpResponseRedirect("/")
+        final_url = reverse('login:handler_user_included',args=[user_to])
+        return HttpResponseRedirect(final_url)
     else:
-        form = sendmessage()
         username = request.user.get_username()
-        new_choices = [(value, label) for value, label in form.fields['user_to'].choices if value != username]
-        form.fields['user_to'].choices = new_choices
-        messages = Message.objects.filter(chat__participants__username__in= [username])
-        return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
+        if not username_link:
+            form = sendmessage()
+            new_choices = [(value, label) for value, label in form.fields['user_to'].choices if value != username]
+            form.fields['user_to'].choices = new_choices
+            usernames = User.objects.exclude(username=username).values_list('username', flat=True)
+            return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames})
+        else:
+            messages = Message.objects.filter(
+            chat__in=Chat.objects.filter(participants__username=username).filter(participants__username=username_link))
+            form = sendmessage()
+            return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
+

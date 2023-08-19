@@ -3,6 +3,15 @@
     <p>{{ message.text}}</p>
 </div>
 {% endfor %}
+{% for user in users %}
+<div class ="users-container">
+    <form action="" method="post">
+        {% csrf_token %}
+        
+        <a href="./{{user}}">{{ user}}</a>
+    </form>
+</div>
+{% endfor%}
 <form action="" method="post">
     {% csrf_token %}
     {{messageform}}
