@@ -23,5 +23,8 @@ class Message(models.Model):
     created= models.DateTimeField(auto_now_add=True)
     text = models.TextField(max_length=500)
 
-
+class Friend_Request(models.Model):
+    user_sending = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sending_user')
+    user_sent_to = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_sent_to')
+    created = models.DateTimeField(auto_now_add=True)
 

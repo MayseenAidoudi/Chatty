@@ -15,3 +15,6 @@ class CustomUserCreationForm(UserCreationForm):
         app_user = App_User(user=user)
         app_user.save()
         return user
+
+class add_friend(forms.Form):
+    user_to = forms.ChoiceField(label="Select a person to add as a friend")

@@ -107,15 +107,20 @@ def messaging_service(request,username_link):
     else:
         username = request.user.get_username()
         if not username_link:
-            form = general_sendmessage()
             appuser = App_User.objects.filter(user__username = username).first()
+            form_add_friend = add_friend()
+            new_friends_choices = User.objects.exclude(user_friends = appuser).exclude(username = appuser.user.username).values_list('username','username')
+            form_add_friend.fields['user_to'].choices = new_friends_choices
+            form = general_sendmessage()
             new_choices = appuser.friends.exclude(username=username).values_list('username','username')
             form.fields['user_to'].choices = new_choices
             usernames = appuser.friends.exclude(username=username).values_list('username', flat=True)
-            return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames})
+            return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames,'form_add_friend':form_add_friend})
         else:
-            messages = Message.objects.filter(
-            chat__in=Chat.objects.filter(participants__username=username).filter(participants__username=username_link))
+            messages = Message.objects.filter(chat__in=Chat.objects.filter(participants__username=username).filter(participants__username=username_link))
             form = specific_sendmessage()
             return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
 
+def friends_service(request):
+    user_sending = request.user
+    user_to = request.POST.get()
