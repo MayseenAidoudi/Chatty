@@ -24,7 +24,7 @@ class Message(models.Model):
     text = models.TextField(max_length=500)
 
 class Friend_Request(models.Model):
-    user_sending = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sending_user')
-    user_sent_to = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_sent_to')
+    user_sending = models.ForeignKey(App_User, on_delete=models.CASCADE, related_name='requests_sent')
+    user_sent_to = models.ForeignKey(App_User, on_delete=models.CASCADE, related_name='requests_received')
     created = models.DateTimeField(auto_now_add=True)
 

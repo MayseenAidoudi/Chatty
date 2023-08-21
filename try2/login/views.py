@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q,Count
 from django.urls import reverse
 from .forms import *
-from .models import Message, Chat,App_User,User
+from .models import Message, Chat,App_User,User,Friend_Request
 
 # Create your views here.
 def handler(request):
@@ -78,32 +78,51 @@ def messaging_service(request,username_link):
         if not user_exists(username_link):
             return HttpResponseRedirect("/chat/")
     if request.method == "POST":
-        if not username_link:
-            form = general_sendmessage(data = request.POST)
-        else:
-            form = specific_sendmessage(data = request.POST)
-        if form.is_valid():
+        if 'messageform' in request.POST:
             if not username_link:
+                form = general_sendmessage(data = request.POST)
+            else:
+                form = specific_sendmessage(data = request.POST)
+            if form.is_valid():
+                if not username_link:
+                    user_to = form.cleaned_data.get("user_to")
+                else:
+                    user_to = username_link
+                user_recep = User.objects.get(username = user_to) 
+                text = form.cleaned_data.get("text")
+                chatrec  = Chat.objects.annotate(participant_count=Count('participants')).filter(participants=request.user).filter(participants=user_recep).filter(participant_count=2)
+                if chatrec.exists():
+                    chat_to = chatrec.get()
+                    message_to_send = Message(text = text, user = request.user, chat = chat_to)
+                    message_to_send.save()
+                else:
+                    chat_to = Chat.objects.create()
+                    chat_to.participants.add(user_recep)
+                    chat_to.participants.add(request.user)
+                    chat_to.save()
+                    message_to_send = Message(text = text, user = request.user, chat = chat_to)
+                    message_to_send.save()
+                    print("hello")
+            final_url = reverse('login:handler_user_included',args=[user_to])
+            return HttpResponseRedirect(final_url)
+        elif 'addfriendform' in request.POST:
+            form = add_friend(data = request.POST)
+            if form.is_valid():
                 user_to = form.cleaned_data.get("user_to")
+                user_to_send = App_User.objects.get(user__username = user_to)
+                user_sending = App_User.objects.get(user = request.user)
+                old_FRequests = Friend_Request.objects.filter(user_sending = user_sending).filter(user_sent_to = user_to_send)
+                if old_FRequests.exists():
+                    return HttpResponseRedirect('/chat/')
+                else:
+                    FRequest = Friend_Request()
+                    FRequest.user_sending = user_sending
+                    FRequest.user_sent_to = user_to_send
+                    FRequest.save()
             else:
-                user_to = username_link
-            user_recep = App_User.objects.get(username = user_to)    
-            text = form.cleaned_data.get("text")
-            chatrec  = Chat.objects.annotate(participant_count=Count('participants')).filter(participants=request.user).filter(participants=user_recep).filter(participant_count=2)
-            if chatrec.exists():
-                chat_to = chatrec.get()
-                message_to_send = Message(text = text, user = request.user, chat = chat_to)
-                message_to_send.save()
-            else:
-                chat_to = Chat.objects.create()
-                chat_to.participants.add(user_recep)
-                chat_to.participants.add(request.user)
-                chat_to.save()
-                message_to_send = Message(text = text, user = request.user, chat = chat_to)
-                message_to_send.save()
-                print("hello")
-        final_url = reverse('login:handler_user_included',args=[user_to])
-        return HttpResponseRedirect(final_url)
+                return HttpResponseRedirect('/')
+            return HttpResponseRedirect('/chat/')
+        
     else:
         username = request.user.get_username()
         if not username_link:
@@ -121,6 +140,3 @@ def messaging_service(request,username_link):
             form = specific_sendmessage()
             return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
 
-def friends_service(request):
-    user_sending = request.user
-    user_to = request.POST.get()
