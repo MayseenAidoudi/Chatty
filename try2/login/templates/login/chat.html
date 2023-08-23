@@ -17,12 +17,12 @@
     {{messageform}}
 <input type="submit" name="messageform"  value="send massage">
 </form>
-
+{%if form_add_friend%}
 
 <form action="" method="post">
     {% csrf_token %}
     {{ form_add_friend }}
     <input type="submit" name="addfriendform" value="Add friend">    
-
+{%endif%}
 </form>
 hello ya {{ username}}
