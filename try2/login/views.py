@@ -89,7 +89,7 @@ def messaging_service(request,username_link):
                 else:
                     user_to = username_link
                 user_recep = User.objects.get(username = user_to) 
-                text = form.cleaned_data.get("text")
+                text = form.cleaned_data.get("message_to_send")
                 chatrec  = Chat.objects.annotate(participant_count=Count('participants')).filter(participants=request.user).filter(participants=user_recep).filter(participant_count=2)
                 if chatrec.exists():
                     chat_to = chatrec.get()
@@ -122,21 +122,40 @@ def messaging_service(request,username_link):
             else:
                 return HttpResponseRedirect('/')
             return HttpResponseRedirect('/chat/')
-        
+        elif ('decision' in request.POST):
+            f_request_user = request.POST.get('f_request_user')
+            decision = request.POST.get('decision')
+            if f_request_user and decision:
+                if decision not in ['Accept','Refuse'] or not user_exists(f_request_user):
+                    return HttpResponseRedirect("/chat/")
+                f_request_app_user_sender = App_User.objects.get(user__username = f_request_user)
+                f_request_app_user_reciever = App_User.objects.get(user = request.user)
+                if decision == "Accept":
+                    f_request_app_user_reciever.friends.add(f_request_app_user_sender.user)
+                    f_request_app_user_sender.friends.add(f_request_app_user_reciever.user)
+                f_request = Friend_Request.objects.get(user_sending = f_request_app_user_sender, user_sent_to=f_request_app_user_reciever)
+                f_request.delete()
+            return HttpResponseRedirect("/chat/")
     else:
         username = request.user.get_username()
         if not username_link:
             appuser = App_User.objects.filter(user__username = username).first()
             form_add_friend = add_friend()
+            requests =get_friend_requests(appuser)
             new_friends_choices = User.objects.exclude(user_friends = appuser).exclude(username = appuser.user.username).values_list('username','username')
             form_add_friend.fields['user_to'].choices = new_friends_choices
             form = general_sendmessage()
             new_choices = appuser.friends.exclude(username=username).values_list('username','username')
             form.fields['user_to'].choices = new_choices
             usernames = appuser.friends.exclude(username=username).values_list('username', flat=True)
-            return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames,'form_add_friend':form_add_friend})
+            return render(request, 'login/chat.html',{'username': username,'messageform': form,'users': usernames,'f_requests':requests,'form_add_friend':form_add_friend,'enable_websocket':False})
         else:
+            enable_websocket = True
             messages = Message.objects.filter(chat__in=Chat.objects.filter(participants__username=username).filter(participants__username=username_link))
             form = specific_sendmessage()
-            return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages})
+            return render(request, 'login/chat.html',{'username': username,'messageform': form, 'messages':messages, 'username_link':username_link,'enable_websocket':enable_websocket})
 
+def get_friend_requests(User):
+    requests = Friend_Request.objects.filter(user_sent_to = User)
+    actual = [request.user_sending.user.username for request in requests]
+    return actual

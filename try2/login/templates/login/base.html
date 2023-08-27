@@ -1,0 +1,36 @@
+{% load tailwind_tags %}
+
+<head>
+
+    {%tailwind_css%}
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+
+</head>
+
+
+<body>
+    <nav class="bg-indigo-500 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/chat" class="text-white text-xl font-semibold">Chatty</a>
+            <div class="text-white">
+                {% if user.is_authenticated %}
+                Hello {{ user.username }} |
+                <a href="" class="hover:underline">Profile</a> |
+                <a href="" class="hover:underline">Messages</a> |
+                <a href="{% url 'login:logout_user_url'%}" class="hover:underline">Logout</a>
+                {% else %}
+                <a href="{% url 'login:login_url'%}" class="hover:underline">Login</a> |
+                <a href="{% url 'login:register'%}" class="hover:underline">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    
+    
+    
+    
+    {% block content %}
+    {% endblock content %}
+</body>

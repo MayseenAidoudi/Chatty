@@ -25,12 +25,14 @@ SECRET_KEY = 'django-insecure--py=sp=@osz92_c(*l3%ppha@7a370ar%m8)=_nzjt!r6()!4z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.2', 'localhost','127.0.0.1','192.168.1.4','197.15.114.240']
-
+ALLOWED_HOSTS = ['192.168.1.2', 'localhost','127.0.0.1','192.168.1.4','41.225.66.67']
+NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
 
 # Application definition
 
+
 INSTALLED_APPS = [
+    'daphne',
     "login.apps.LoginConfig",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -38,9 +40,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tailwind',
+    'theme',
+    'django_browser_reload',
+'widget_tweaks',
+
 ]
 
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+
+CRISPY_TEMPLATE_PACK = "tailwind"
+TAILWIND_APP_NAME = 'theme'
 MIDDLEWARE = [
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -110,6 +123,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+## channels layers
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 
 # Static files (CSS, JavaScript, Images)
@@ -121,3 +140,4 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ASGI_APPLICATION = "try2.asgi.application"

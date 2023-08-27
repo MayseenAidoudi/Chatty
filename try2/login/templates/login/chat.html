@@ -1,28 +1,258 @@
-{% for message in messages %}
-<div class="message-container">
-    <p>{{ message.text}}</p>
-</div>
-{% endfor %}
-{% for user in users %}
-<div class ="users-container">
-    <form action="" method="post">
-        {% csrf_token %}
-        
-        <a href="./{{user}}">{{ user}}</a>
-    </form>
-</div>
-{% endfor%}
-<form action="" method="post">
-    {% csrf_token %}
-    {{messageform}}
-<input type="submit" name="messageform"  value="send massage">
-</form>
-{%if form_add_friend%}
+{% extends 'login/base.html' %}
+{% load widget_tweaks %}
+{% block content %}
 
-<form action="" method="post">
-    {% csrf_token %}
-    {{ form_add_friend }}
-    <input type="submit" name="addfriendform" value="Add friend">    
-{%endif%}
-</form>
-hello ya {{ username}}
+
+
+<div class="flex justify-center ">
+    <div class="flex flex-col items-center w-full m-4">
+        {%if messages%}
+        <div id="messages-box"class=" max-w-full w-full max-h-80 overflow-y-scroll  mb-4 border-2 rounded-md border-indigo-500 p-1">
+        {% for message in messages %}
+        {% if message.user.username == username %}
+        <div class="flex justify-end">
+            <div class="max-w-[60%] flex items-center">
+                <div class="flex-1">
+                    <div class="message-container p-4 border rounded-l-[25px] rounded-r-lg mb-4 bg-indigo-500 text-white">
+                        <p class="">{{ message.text }}</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-gray-200 ml-2 mb-4 flex-shrink-0"></div>
+            </div>
+        </div>
+        {% else %}
+        <div class="flex justify-start">
+            <div class="max-w-[60%] flex items-center">
+                <div class="w-8 h-8 rounded-full bg-indigo-500 mb-4 mr-2 flex-shrink-0"></div>
+            <div class="message-container p-4 border rounded-r-[25px] rounded-l-lg mb-4 inline-block max-w-3/5 bg-gray-200 text-black object-left">
+                <p class="">{{ message.text }}</p>
+            </div>
+            </div>
+        </div>
+        {%endif%}
+        {% endfor %}
+        </div>
+        {%endif%}
+        
+            {% for user in users %}
+            <div class="users-container mb-4 rounder-m">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <a href="./{{ user }}" class="text-blue-500 hover:underline">{{ user }}</a>
+                </form>
+            </div>
+            {% endfor %}
+            <div class="w-1/2">
+                <form id="message-form" action="" method="post" class="mb-4 rounded-md" data-enable-websocket="{{ enable_websocket}}">
+                    {% csrf_token %}
+                    <div class="flex items-center">
+                        <div class="flex-grow w-3/4 mr-2">
+                            {% if messageform.visible_fields|length > 1 %}
+                                <div class="flex-grow mr flex">
+                                    {% for field in messageform.visible_fields %}
+                                        <div class="w-full mr-1">
+                                            {{ field|add_class:'w-full py-1.5 border-indigo-500 border-2 rounded-md' }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {% for field in messageform.visible_fields %}
+                                    {{ field|add_class:'w-full py-1.5 border-indigo-500 border-2 rounded-md' }}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button type="submit" name="messageform"  id="send-button" class="w-1/4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 font-mono font-normal antialiased shadow-md shadow-indigo-500/50">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% if form_add_friend %}
+            <div class="w-1/2">
+            <form action="" method="post" class="mb-4">
+                {% csrf_token %}
+                <div class="flex items-center">
+                    <div class="flex-grow w-3/4 mr-2">
+                        {% for field in form_add_friend.visible_fields %}
+                                {{field|add_class:'rounded-md w-full py-1.5 border-indigo-500 border-2'}}
+                        {% endfor%}
+                    </div>
+                    <input type="submit" name="addfriendform" value="Add Friend"
+                       class="w-1/4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 font-mono font-normal antialiased shadow-md shadow-indigo-500/50">
+                </div>
+            </form>
+            </div>
+            {% endif %}
+            {% for f_request in f_requests %}
+            <div class="f_requests-container mb-4">
+                <form action="" method="post" name="friend_request_form" value="friend_request_form">
+                    {{ f_request }}
+                    <input type="hidden" value="{{ f_request }}" name="f_request_user">
+                    {% csrf_token %}
+                    <input type="submit" name="decision" value="Accept"
+                           class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                    <input type="submit" name="decision" value="Refuse"
+                           class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                </form>
+            </div>
+            {% endfor %}
+    </div>
+</div>
+<p class="mt-4 text-gray-800 text-center hover:underline">Hello ya {{ username }}</p>
+
+<script>
+    const usernameLink = "{{ username_link }}";
+      // This should have the actual value
+      function createMessagesBox() {
+        const messagesBox = document.getElementById("messages-box");
+        if (!messagesBox) {
+            const messagesBoxElement = document.createElement('div');
+            messagesBoxElement.id = "messages-box";
+            messagesBoxElement.classList.add('max-h-80', 'overflow-y-scroll', 'w-1/2', 'mb-4', 'border-2', 'rounded-md', 'border-indigo-500', 'p-1');
+            
+            const containerDiv = document.querySelector('.flex.flex-col.items-center.w-full.m-4');
+            containerDiv.insertBefore(messagesBoxElement, containerDiv.firstChild);
+        }
+    }
+    
+    let chatSocket; 
+      if (usernameLink !== ""){
+    chatSocket = new WebSocket(
+        `ws://${window.location.host}/ws/chat/${usernameLink}/`
+    
+    );
+}   
+    else{
+        chatSocket = new WebSocket(
+        `ws://${window.location.host}/ws/chat/`
+        );
+    }
+    
+    // Get the message input field
+    const messageInput = document.getElementById("message_to_send");
+    
+    // Add a submit event listener to the form
+    const messageForm = document.getElementById("message-form");
+    const enableWebsocket = messageForm.getAttribute("data-enable-websocket");
+    if (enableWebsocket === "True"){
+document.getElementById("message-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById("message_to_send");
+    const message = messageInput.value.trim();
+
+    if (message !== "") {
+        const messageData = {
+            message: message,
+            sender: "{{ username }}"  // Add the sender's username here
+        };
+        chatSocket.send(JSON.stringify(messageData));
+        messageInput.value = "";  // Clear the input field after sending
+    }
+});
+    }
+    
+    // Listen for incoming messages from the WebSocket server
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const receivedMessage = data.message;
+        const sender = data.sender;
+        if (sender=== "{{ username }}"){
+            // Create a new message container
+            const outerContainer = document.createElement('div');
+            outerContainer.classList.add('flex', 'justify-end');
+
+            // Create the inner container div
+            const innerContainer = document.createElement('div');
+            innerContainer.classList.add('max-w-[60%]', 'flex', 'items-center');
+
+            // Create the message container div
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('flex-1', 'message-container', 'p-4', 'border', 'rounded-l-[25px]', 'rounded-r-lg', 'mb-4', 'bg-indigo-500', 'text-white');
+
+            // Create the paragraph element for the message text
+            const messageText = document.createElement('p');
+            messageText.textContent = `${receivedMessage}`;  // Replace with your message
+
+            // Append the message text to the message container
+            messageContainer.appendChild(messageText);
+
+            // Create the circle div
+            const circleDiv = document.createElement('div');
+            circleDiv.classList.add('w-8', 'h-8', 'rounded-full', 'bg-gray-200', 'ml-2', 'mb-4', 'flex-shrink-0');
+
+            // Append the message container and circle div to the inner container
+            innerContainer.appendChild(messageContainer);
+            innerContainer.appendChild(circleDiv);
+            createMessagesBox();
+            // Append the inner container to the outer container
+            outerContainer.appendChild(innerContainer);
+            // Append the message container to the message container element
+            const messageContainerElement = document.querySelector('#messages-box');
+            messageContainerElement.appendChild(outerContainer);
+
+            // Scroll to the bottom of the message container to show the new message
+            messageContainerElement.scrollTop = messageContainerElement.scrollHeight;
+
+        } else {
+
+            // Create a new message container
+            const outerContainer = document.createElement('div');
+            outerContainer.classList.add('flex', 'justify-start');
+
+            // Create the inner container div
+            const innerContainer = document.createElement('div');
+            innerContainer.classList.add('max-w-[60%]', 'flex', 'items-center');
+
+            // Create the circle div for the avatar
+            const circleDiv = document.createElement('div');
+            circleDiv.classList.add('w-8', 'h-8', 'rounded-full', 'bg-indigo-500', 'mb-4', 'mr-2', 'flex-shrink-0');
+
+            // Append the circle div to the inner container
+            innerContainer.appendChild(circleDiv);
+
+            // Create the message container div
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container', 'p-4', 'border', 'rounded-r-[25px]', 'rounded-l-lg', 'mb-4', 'inline-block', 'max-w-3/5', 'bg-gray-200', 'text-black', 'object-left');
+
+            // Create the paragraph element for the message text
+            const messageText = document.createElement('p');
+            messageText.textContent = `${receivedMessage}`;  // Replace with your message
+
+            // Append the message text to the message container
+            messageContainer.appendChild(messageText);
+
+            // Append the message container to the inner container
+            innerContainer.appendChild(messageContainer);
+
+            // Append the inner container to the outer container
+            outerContainer.appendChild(innerContainer);
+            createMessagesBox();
+            // Append the outer container to the message container element
+            const messageContainerElement = document.querySelector('#messages-box');
+            messageContainerElement.appendChild(outerContainer);
+
+            // Scroll to the bottom of the message container to show the new message
+            messageContainerElement.scrollTop = messageContainerElement.scrollHeight;
+
+        }
+        
+    };
+    
+    
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+
+    chatSocket.onerror = function(event) {
+        console.error("WebSocket error:", event);
+    };
+
+    function scrollToBottom() {
+        const messageContainer = document.querySelector('.max-h-80');
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    window.addEventListener('load', scrollToBottom);
+</script>
+{% endblock content %}

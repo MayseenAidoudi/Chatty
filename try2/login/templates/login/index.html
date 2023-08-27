@@ -1,3 +1,5 @@
+{% extends 'login/base.html' %}
+{% block content%}
 {% if request.user.is_authenticated %}
 <form action="chat/logout/" method="post">
     {% csrf_token %}
@@ -7,18 +9,23 @@
 
 
 {% if formlogin %}
+<div class="flex justify-center mt-4">
 <form action="/chat/" method="post">
     {% csrf_token %}
     {{ formlogin }}
-    <input type="submit" value="Submit">
+    <input type="submit" value="Submit" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 font-mono font-normal antialiased shadow-md shadow-indigo-500/50">
 </form>
+</div>
 {% endif %}
 {% if formregister %}
+<div class="flex justify-center mt-4">
 <form action="" method="post">
     {% csrf_token %}
     {{ formregister }}
-    <input type="submit" value="Submit">
+    <br>
+    <input type="submit" value="Submit" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 font-mono font-normal antialiased shadow-md shadow-indigo-500/50">
 </form>
+</div>
 {% endif %}
 
 
@@ -27,3 +34,4 @@
     <p class="error">{{ error_message }}</p>
 {% endif %}
 
+{%endblock%}
